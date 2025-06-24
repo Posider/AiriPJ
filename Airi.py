@@ -5,7 +5,7 @@ import os
 
 # ดึงค่าจาก environment variables ของ Railway
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
+CHANNEL_ID = os.getenv(CHANNEL_ID)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # ตรวจสอบว่าได้ค่าทั้งหมดหรือไม่
