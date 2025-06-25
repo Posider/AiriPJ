@@ -90,4 +90,4 @@ async def on_message(message):
     await bot.process_commands(message)
 
 # รันบอท
-bot.run = os.getenv("DISCORD_TOKEN")
+bot.run = os.getenv(DISCORD_TOKEN)
