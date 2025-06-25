@@ -1,4 +1,4 @@
-import discord
+ขimport discord
 from discord.ext import commands
 import google.generativeai as genai
 import os
@@ -90,4 +90,4 @@ async def on_message(message):
     await bot.process_commands(message)
 
 # รันบอท
-bot.run = os.getenv(DISCORD_TOKEN)
+bot.run = (DISCORD_TOKEN)
