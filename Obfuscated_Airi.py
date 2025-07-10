@@ -58,9 +58,9 @@ async def on_message(message):
     global latest_channel_id
 
     if message.author.id == bot.user.id or message.channel.id != latest_channel_id:
-        return
+    return
 
-    friendly_bots = ["BotKuma", "BotYuki", "AiriV2"]
+    friendly_bots = ["AkiraBotAPI"]
 
     user_history = list(history_data[message.author.id])
     parts = [{"text": promptpay}] + user_history
