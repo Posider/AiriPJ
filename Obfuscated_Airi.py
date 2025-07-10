@@ -57,15 +57,19 @@ async def on_ready():
 async def on_message(message):
     global latest_channel_id
 
-    if message.author.id == bot.user.id or message.channel.id != latest_channel_id:
-    return
+    if message.channel.id != latest_channel_id:
+        return
 
-    friendly_bots = ["AkiraBotAPI"]
+    # ✅ ห้ามตอบตัวเอง แต่ตอบบอทอื่นได้
+    if message.author.id == bot.user.id:
+        return
+
+    friendly_bots = ["AkiraBotAPI"]  # บอทที่ตอบได้
 
     user_history = list(history_data[message.author.id])
     parts = [{"text": promptpay}] + user_history
 
-    # รองรับภาพ
+    # แนบภาพ
     for attachment in message.attachments:
         if attachment.content_type:
             if attachment.content_type.startswith("image/"):
@@ -81,7 +85,7 @@ async def on_message(message):
                 await message.reply("อุ้ย~ ตอนนี้ไอริยังดูวิดีโอไม่ได้น้า~ 🥺💦")
                 return
 
-    # เพิ่มข้อความเข้า context
+    # ข้อความ
     if message.content.strip():
         if message.author.bot and message.author.name in friendly_bots:
             parts.append({"text": f"บอท {message.author.name} พูดว่า: {message.content.strip()}"})
@@ -98,7 +102,6 @@ async def on_message(message):
         history_data[message.author.id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
         history_data[message.author.id].append({"text": f"ไอริ: {reply}"})
 
-        # ส่งข้อความเป็น embed ไม่แนบไฟล์
         embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
         await message.reply(embed=embed)
 
@@ -106,6 +109,7 @@ async def on_message(message):
         await message.reply(f"❌ เกิดข้อผิดพลาดค่า~\n```{str(e)}```")
         print(f"[ERROR] {str(e)}")
 
+    # ✅ สำคัญมาก: ให้คำสั่ง Slash ยังทำงาน
     await bot.process_commands(message)
 
 # 🔁 /reset
