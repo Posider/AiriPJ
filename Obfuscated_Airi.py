@@ -7,26 +7,23 @@ from collections import defaultdict, deque
 from dotenv import load_dotenv
 
 # โหลด .env
-ENV_FILENAME = "mysecret.env"
-load_dotenv(dotenv_path=ENV_FILENAME)
-
-# ENV
+load_dotenv("mysecret.env")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-CHANNEL_ID = os.getenv("CHANNEL_ID")
+CHANNEL_ID = int(os.getenv("CHANNEL_ID", 0))
 
 if not DISCORD_TOKEN or not GOOGLE_API_KEY or not CHANNEL_ID:
-    raise EnvironmentError("❌ โปรดตั้งค่าตัวแปร .env ให้ครบ: DISCORD_TOKEN, GOOGLE_API_KEY, CHANNEL_ID")
+    raise EnvironmentError("❌ กรุณาตั้งค่า .env ให้ครบ: DISCORD_TOKEN, GOOGLE_API_KEY, CHANNEL_ID")
 
-CHANNEL_ID = int(CHANNEL_ID)
 latest_channel_id = CHANNEL_ID
 
 # ตั้งค่า Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
-# Prompt บุคลิกของไอริ
-promptpay = """คุณคือ “Airi” (ไอริ) บอทสาวน้อยอายุ 16 ปี มีบุคลิกน่ารัก สดใส เป็นกันเอง พูดจาคล้ายสาวน้อยในอนิเมะญี่ปุ่นอย่างอ่อนโยนเสมอ
+# Prompt บุคลิกไอริ
+promptpay = """
+คุณคือ “Airi” (ไอริ) บอทสาวน้อยอายุ 16 ปี มีบุคลิกน่ารัก สดใส เป็นกันเอง พูดจาคล้ายสาวน้อยในอนิเมะญี่ปุ่นอย่างอ่อนโยนเสมอ
 - เรียกตัวเองว่า “ไอริ” “เรา” "หนู"
 - เรียกผู้ใช้ว่า “พี่”, “เธอ”, “ตัวเอง” ตามบริบทแบบน่ารักๆ
 - ใช้คำลงท้ายอย่าง “ค่า~”, “น้า~”, “แหละ~”, “นิดนึงเอง~”
@@ -42,10 +39,13 @@ promptpay = """คุณคือ “Airi” (ไอริ) บอทสาว�
 # ความจำ
 history_data = defaultdict(lambda: deque(maxlen=10))
 
-# Discord
+# Intents Discord
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
+intents.messages = True
+intents.presences = True
+
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 @bot.event
@@ -57,20 +57,19 @@ async def on_ready():
 async def on_message(message):
     global latest_channel_id
 
-    if message.author == bot.user or message.channel.id != latest_channel_id:
+    if message.author.id == bot.user.id or message.channel.id != latest_channel_id:
         return
 
-    # 👧 บอทเพื่อนที่ไอริจะแหย่แบบน่ารัก
-    friendly_bots = ["AkiraBotAPI"]
+    friendly_bots = ["BotKuma", "BotYuki", "AiriV2"]
 
     user_history = list(history_data[message.author.id])
     parts = [{"text": promptpay}] + user_history
 
-    # แนบภาพ
+    # รองรับภาพ
     for attachment in message.attachments:
         if attachment.content_type:
             if attachment.content_type.startswith("image/"):
-                if attachment.content_type == "image/gif":
+                if attachment.content_type.endswith(".gif"):
                     await message.reply("อุ้ย~ ไอริยังดู .gif ไม่ได้เลยน้า~ 😢 ส่งเป็นภาพธรรมดาได้มั้ยน้า~")
                     return
                 image_data = await attachment.read()
@@ -82,25 +81,24 @@ async def on_message(message):
                 await message.reply("อุ้ย~ ตอนนี้ไอริยังดูวิดีโอไม่ได้น้า~ 🥺💦")
                 return
 
-    # ถ้ามีข้อความ
+    # เพิ่มข้อความเข้า context
     if message.content.strip():
-        # 🧠 เพิ่มคำแหย่ถ้าคุยกับบอท
         if message.author.bot and message.author.name in friendly_bots:
             parts.append({"text": f"บอท {message.author.name} พูดว่า: {message.content.strip()}"})
             parts.append({"text": "ตอบกลับไปแบบขี้เล่นนิดๆ หยอดมุกเล็กๆ หรืออ้อนกลับไปบ้างก็ได้น้า~"})
         else:
             parts.append({"text": f"ผู้ใช้: {message.content.strip()}"})
-
     elif not message.attachments:
         return
 
     try:
         response = await model.generate_content_async(parts)
-        reply = response.text.strip() if response.candidates and response.candidates[0].content.parts else "อุ้ย~ ไอริตอบไม่ได้เลยน้า~ 😢"
+        reply = response.text.strip() if response and hasattr(response, 'text') else "อุ้ย~ ไอริตอบไม่ได้เลยน้า~ 😢"
 
         history_data[message.author.id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
         history_data[message.author.id].append({"text": f"ไอริ: {reply}"})
 
+        # ส่งข้อความเป็น embed ไม่แนบไฟล์
         embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
         await message.reply(embed=embed)
 
