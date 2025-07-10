@@ -61,7 +61,7 @@ async def on_message(message):
         return
 
     # 👧 บอทเพื่อนที่ไอริจะแหย่แบบน่ารัก
-    friendly_bots = ["BotKuma", "BotYuki", "AiriV2"]
+    friendly_bots = ["AkiraBotAPI"]
 
     user_history = list(history_data[message.author.id])
     parts = [{"text": promptpay}] + user_history
