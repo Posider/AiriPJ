@@ -152,7 +152,7 @@ async def jump_channel(interaction: discord.Interaction, channel_name: str):
     await target_channel.send("ไอริย้ายมาห้องนี้แล้วน้า~ ถามไอริมาได้เลยค่า~ 💬")
 
 # 📌 /cloneTo
-@bot.tree.command(name="cloneTo", description="เพิ่มห้องใหม่ให้ไอริตอบด้วย โดยห้องเก่ายังคุยได้ปกติ")
+@bot.tree.command(name="cloneto", description="เพิ่มห้องใหม่ให้ไอริตอบ")
 @app_commands.describe(channel_name="ชื่อห้องใหม่ที่อยากให้ไอริตอบด้วย")
 async def clone_to_channel(interaction: discord.Interaction, channel_name: str):
     guild = interaction.guild
