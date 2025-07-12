@@ -151,5 +151,20 @@ async def jump_channel(interaction: discord.Interaction, channel_name: str):
     await interaction.response.send_message(f"ย้ายไปที่ `{channel_name}` แล้วน้า~ 💖", ephemeral=True)
     await target_channel.send("ไอริย้ายมาห้องนี้แล้วน้า~ ถามไอริมาได้เลยค่า~ 💬")
 
+# 📌 /cloneTo
+@bot.tree.command(name="cloneTo", description="เพิ่มห้องใหม่ให้ไอริตอบด้วย โดยห้องเก่ายังคุยได้ปกติ")
+@app_commands.describe(channel_name="ชื่อห้องใหม่ที่อยากให้ไอริตอบด้วย")
+async def clone_to_channel(interaction: discord.Interaction, channel_name: str):
+    guild = interaction.guild
+    target_channel = discord.utils.get(guild.text_channels, name=channel_name)
+
+    if not target_channel:
+        await interaction.response.send_message(f"หาไม่เจอเลยน้า~ ไม่มีห้องชื่อ `{channel_name}` 😢", ephemeral=True)
+        return
+
+    active_channel_ids.add(target_channel.id)
+    await interaction.response.send_message(f"ไอริจะคุยที่ `{channel_name}` ด้วยแล้วน้า~ 💕", ephemeral=True)
+    await target_channel.send("ไอริมาอยู่ที่นี่ด้วยแล้วน้า~ มาคุย
+
 # ✅ Run
 bot.run(DISCORD_TOKEN)
