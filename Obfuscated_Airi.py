@@ -164,7 +164,7 @@ async def clone_to_channel(interaction: discord.Interaction, channel_name: str):
 
     active_channel_ids.add(target_channel.id)
     await interaction.response.send_message(f"ไอริจะคุยที่ `{channel_name}` ด้วยแล้วน้า~ 💕", ephemeral=True)
-    await target_channel.send("ไอริมาอยู่ที่นี่ด้วยแล้วน้า~ มาคุย
+    await target_channel.send("ไอริมาอยู่ที่นี่ด้วยแล้วน้า~ มาคุย")
 
 # ✅ Run
 bot.run(DISCORD_TOKEN)
