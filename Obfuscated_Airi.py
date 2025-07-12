@@ -258,7 +258,7 @@ async def on_message(message):
 
     # เลือก prompt ตามความงอนและความประทับใจ
     prompt_used = get_prompt_by_mood(grudge_level[message.author.id], impression_score[message.author.id])
-    parts = [{"text": prompt_used}] + history_data[message.author.id]
+    parts = [{"text": prompt_used}] + list(history_data[message.author.id])
 
     try:
         response = await model.generate_content_async(parts)
