@@ -249,6 +249,8 @@ async def on_message(message):
     parts.append({"text": f"ผู้ใช้: {message.content.strip()}"})
 
     try:
+    response = model.generate_content(parts)
+
     if response and response.candidates:
         reply = response.candidates[0].content.parts[0].text.strip()
     else:
