@@ -230,7 +230,7 @@ async def on_message(message):
 
     if contains_bad_words(message.content):
         grudge_level[user_id] = min(15, grudge_level[user_id] + 2)
-        await message.reply("งือ~ พูดไม่เพราะเลยน้า~ ไอริงอนนิดนึงแล้ว~ ")
+        await message.reply("งือ~ ไอริขอโทษ...")
         return
 
     custom = get_custom_response(message.content)
@@ -252,12 +252,9 @@ async def on_message(message):
         history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
         history_data[user_id].append({"text": f"ไอริ: {reply}"})
 
-        embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
-        await message.reply(embed=embed)
-
     except Exception as e:
-        await message.reply(f"❌ เกิดข้อผิดพลาดค่า~\n```{str(e)}```")
-        print(f"[ERROR] {str(e)}")
+        await message.reply(f"ขอโทษน้าาไอริฟังไม่ออกค่ะ")
+        print(f"[ERROR]")
 
     await bot.process_commands(message)
 
@@ -293,5 +290,10 @@ async def jump_channel(interaction: discord.Interaction, channel_name: str):
     latest_channel_id = target_channel.id
     await interaction.response.send_message(f"ย้ายไปที่ `{channel_name}` แล้วน้า~ ", ephemeral=True)
     await target_channel.send("ไอริย้ายมาห้องนี้แล้วน้า~ ถามไอริมาได้เลยค่า~ ")
+
+@bot.tree.command(name="พูด", description="ให้ไอริพูดแทนแบบน่ารักๆ")
+@app_commands.describe(ข้อความ="ข้อความที่ให้ไอริพูด")
+async def say(interaction: discord.Interaction, ข้อความ: str):
+    await interaction.response.send_message(ข้อความ)
 
 bot.run(DISCORD_TOKEN)
