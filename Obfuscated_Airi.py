@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import asyncio
 import random
 
+# โหลดข้อมูลจากไฟล์ .env
 load_dotenv("mysecret.env")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -16,14 +17,18 @@ CHANNEL_ID = int(os.getenv("CHANNEL_ID", 0))
 if not DISCORD_TOKEN or not GOOGLE_API_KEY or not CHANNEL_ID:
     raise EnvironmentError("❌ กรุณาตั้งค่า .env ให้ครบ: DISCORD_TOKEN, GOOGLE_API_KEY, CHANNEL_ID")
 
+# ตั้งค่าเบื้องต้น
 latest_channel_id = CHANNEL_ID
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
+# ระบบความจำ
 history_data = defaultdict(lambda: deque(maxlen=25))
 impression_score = defaultdict(int)
 grudge_level = defaultdict(int)
+last_user_message_id = defaultdict(int)
 
+# คำหยาบและคำตอบเฉพาะ
 bad_words = ["สัส", "โง่", "ควย", "แม่ง", "ส้นตีน", "เย็ด", "หี", "หำ", "เงี่ยน", "แม่มึงอะ", "เสียวควย", "พ่อมึงอะ"]
 custom_responses = {
     "สวัสดี": ["หวัดดีค่า~ วันนี้พี่น่ารักเหมือนเคยเลย~", "สวัสดีค่า~ คิดถึงจังเลย~"],
@@ -32,13 +37,12 @@ custom_responses = {
     "ไอริ": ["ค่าาาา", "มีอะไรให้ไอริช่วยใหมค่ะพี่", "ค่ะพี่"]
 }
 
-last_user_message_id = defaultdict(int)
+# ตั้งค่า intent สำหรับ Discord bot
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.messages = True
 intents.presences = True
-
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 prompt_normal_impression_0 = '''
@@ -184,28 +188,9 @@ prompt_sulky_impression_4 = '''
 '''
 
 def get_prompt_by_mood(grudge: int, impression: int) -> str:
-    if impression == 0:
-        return prompt_normal_impression_0
-    elif impression == 1:
-        return prompt_normal_impression_1
-    elif impression == 2:
-        return prompt_normal_impression_2
-    elif impression == 3:
-        return prompt_normal_impression_3
-    elif impression == 4:
-        return prompt_normal_impression_4
-    elif grudge == 0:
-        return prompt_sulky_impression_0
-    elif grudge == 1:
-        return prompt_sulky_impression_1
-    elif grudge == 2:
-        return prompt_sulky_impression_2
-    elif grudge == 3:
-        return prompt_sulky_impression_3
-    elif grudge == 4:
-        return prompt_sulky_impression_4
-    else:
-        return "ไอริยังไม่รู้ว่าอารมณ์เป็นยังไงนะคะ~"
+    if grudge > 0:
+        return globals().get(f"prompt_sulky_impression_{min(grudge, 4)}", prompt_normal_impression_0)
+    return globals().get(f"prompt_normal_impression_{min(impression, 4)}", prompt_normal_impression_0)
 
 def contains_bad_words(message: str) -> bool:
     return any(word in message.lower() for word in bad_words)
@@ -216,10 +201,12 @@ def get_custom_response(message: str):
             return random.choice(custom_responses[key])
     return None
 
+# ----------------- EVENT -----------------
+
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    print(f"{bot.user} พร้อมใช้งานแล้วน้า~ ")
+    print(f"{bot.user} พร้อมใช้งานแล้วน้า~")
 
 @bot.event
 async def on_message(message):
@@ -235,7 +222,7 @@ async def on_message(message):
         return
 
     if contains_bad_words(message.content):
-        grudge_level[user_id] = min(15, grudge_level[user_id] + 2)
+        grudge_level[user_id] = min(4, grudge_level[user_id] + 1)
         await message.reply("งือ~ ไอริขอโทษ...")
         return
 
@@ -244,28 +231,37 @@ async def on_message(message):
         await message.reply(custom)
         return
 
-    prompt = get_prompt_by_mood(grudge_level[user_id], impression_score[user_id])
-    parts = [{"text": prompt}] + list(history_data[user_id])
-    parts.append({"text": f"ผู้ใช้: {message.content.strip()}"})
-
     try:
-    response = model.generate_content(parts)
+        # สร้าง Prompt และประวัติการคุย
+        prompt = get_prompt_by_mood(grudge_level[user_id], impression_score[user_id])
+        parts = [{"text": prompt}] + list(history_data[user_id])
+        parts.append({"text": f"ผู้ใช้: {message.content.strip()}"})
 
-    if response and 'candidates' in response and response['candidates']:
-        reply = response['candidates'][0]['content']['parts'][0]['text'].strip()
-    else:
-        reply = "อุ้ย~ ไอริตอบไม่ได้เลยน้า~"
-except Exception as e:
-    reply = "ขอโทษน้าา~ ไอริฟังไม่ออกเลยค่ะ 😢"
-    print(f"[ERROR] {type(e).__name__}: {e}")
+        # สร้างคำตอบ
+        response = await model.generate_content_async(parts)
+        print("[DEBUG] Gemini response object:", response)
 
-impression_score[user_id] = min(100, impression_score[user_id] + 1)
-grudge_level[user_id] = max(0, grudge_level[user_id] - 1)
+        if response and response.candidates:
+            reply = response.candidates[0].content.parts[0].text.strip()
+        else:
+            reply = "อุ้ย~ ไอริตอบไม่ได้เลยน้า~"
 
-history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
-history_data[user_id].append({"text": f"ไอริ: {reply}"})
+    except Exception as e:
+        reply = "ขอโทษน้าา~ ไอริฟังไม่ออกเลยค่ะ 😢"
+        print(f"[ERROR] {type(e).__name__}: {e}")
 
-await bot.process_commands(message)
+    # ปรับค่าความรู้สึก
+    impression_score[user_id] = min(100, impression_score[user_id] + 1)
+    grudge_level[user_id] = max(0, grudge_level[user_id] - 1)
+
+    # เก็บประวัติ
+    history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
+    history_data[user_id].append({"text": f"ไอริ: {reply}"})
+
+    await message.reply(reply)
+    await bot.process_commands(message)
+
+# ----------------- COMMAND -----------------
 
 @bot.tree.command(name="reset", description="รีเซ็ตความจำของไอริ")
 async def reset_memory(interaction: discord.Interaction):
@@ -305,4 +301,5 @@ async def jump_channel(interaction: discord.Interaction, channel_name: str):
 async def say(interaction: discord.Interaction, ข้อความ: str):
     await interaction.response.send_message(ข้อความ)
 
+# ----------------- เริ่มบอท -----------------
 bot.run(DISCORD_TOKEN)
