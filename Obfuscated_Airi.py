@@ -251,22 +251,21 @@ async def on_message(message):
     try:
     response = model.generate_content(parts)
 
-    if response and response.candidates:
-        reply = response.candidates[0].content.parts[0].text.strip()
+    if response and 'candidates' in response and response['candidates']:
+        reply = response['candidates'][0]['content']['parts'][0]['text'].strip()
     else:
         reply = "อุ้ย~ ไอริตอบไม่ได้เลยน้า~"
-
 except Exception as e:
     reply = "ขอโทษน้าา~ ไอริฟังไม่ออกเลยค่ะ 😢"
     print(f"[ERROR] {type(e).__name__}: {e}")
 
-        impression_score[user_id] = min(100, impression_score[user_id] + 1)
-        grudge_level[user_id] = max(0, grudge_level[user_id] - 1)
+impression_score[user_id] = min(100, impression_score[user_id] + 1)
+grudge_level[user_id] = max(0, grudge_level[user_id] - 1)
 
-        history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
-        history_data[user_id].append({"text": f"ไอริ: {reply}"})
+history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
+history_data[user_id].append({"text": f"ไอริ: {reply}"})
 
-    await bot.process_commands(message)
+await bot.process_commands(message)
 
 @bot.tree.command(name="reset", description="รีเซ็ตความจำของไอริ")
 async def reset_memory(interaction: discord.Interaction):
