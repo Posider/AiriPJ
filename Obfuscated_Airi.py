@@ -30,7 +30,13 @@ last_user_message_id = defaultdict(int)
 
 impression_score = defaultdict(int)
 
-user_money = defaultdict(int)
+# เงินของผู้เล่น
+user_money = defaultdict(int)  # ใช้เพื่อเก็บเงินของผู้เล่น
+
+# ฟังก์ชันเพิ่มเงิน
+def add_money(user_id, amount):
+    user_money[user_id] += amount
+    print(f"เพิ่ม {amount} บาทให้กับผู้ใช้ {user_id}, ตอนนี้มี {user_money[user_id]} บาท")
 
 # คำหยาบและคำตอบเฉพาะ
 bad_words = ["สัส", "โง่", "ควย", "แม่ง", "ส้นตีน", "เย็ด", "หี", "หำ", "เงี่ยน", "แม่มึงอะ", "เสียวควย", "พ่อมึงอะ"]
