@@ -241,7 +241,12 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    global latest_channel_id
+    if message.author.bot:
+        return
+
+    await bot.process_commands(message)  # สำคัญ! ต้องให้คำสั่งอื่นทำงาน
+    if message.content.strip() != "":
+        await reply_message(message)  # ตอบในฟังก์ชันนี้เท่านั้น ไม่ตอบซ้ำ
 
     # ถ้าช่องที่ไม่ตรงกับช่องล่าสุด หรือส่งจากบอทเอง ให้หยุด
     if message.channel.id != latest_channel_id or message.author.id == bot.user.id:
