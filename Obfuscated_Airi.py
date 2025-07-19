@@ -241,12 +241,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    if message.author.bot:
-        return
-
-    await bot.process_commands(message)  # สำคัญ! ต้องให้คำสั่งอื่นทำงาน
-    if message.content.strip() != "":
-        await reply_message(message)  # ตอบในฟังก์ชันนี้เท่านั้น ไม่ตอบซ้ำ
+    global latest_channel_id
 
     # ถ้าช่องที่ไม่ตรงกับช่องล่าสุด หรือส่งจากบอทเอง ให้หยุด
     if message.channel.id != latest_channel_id or message.author.id == bot.user.id:
@@ -314,9 +309,6 @@ async def on_message(message):
     # เก็บประวัติ
     history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
     history_data[user_id].append({"text": f"ไอริ: {reply}"})
-
-    embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
-    await message.reply(embed=embed)
 
     await message.reply(reply)
     await bot.process_commands(message)
