@@ -247,9 +247,6 @@ async def on_message(message):
     if message.channel.id != latest_channel_id or message.author.id == bot.user.id:
         return
 
-    embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
-    await message.reply(embed=embed)
-
     # โค้ดอื่น ๆ ที่คุณต้องการจะทำหลังจากนี้
 
     user_id = message.author.id
@@ -312,6 +309,9 @@ async def on_message(message):
     # เก็บประวัติ
     history_data[user_id].append({"text": f"ผู้ใช้: {message.content.strip()}"})
     history_data[user_id].append({"text": f"ไอริ: {reply}"})
+
+    embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
+    await message.reply(embed=embed)
 
     await message.reply(reply)
     await bot.process_commands(message)
