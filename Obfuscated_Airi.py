@@ -230,6 +230,10 @@ def get_custom_response(message: str):
 
 # ----------------- EVENT -----------------
 
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix="!", intents=intents)
+
 @bot.event
 async def on_ready():
     await bot.tree.sync()
@@ -398,10 +402,15 @@ async def view_profile(interaction: discord.Interaction):
 
     await interaction.response.send_message(embed=embed)
 
+@bot.tree.command(name="rps")
+@app_commands.describe(choice="เลือกหนึ่งในตัวเลือก: rock, paper, scissors")
+async def rps(interaction: discord.Interaction, choice: str):
+    await interaction.response.send_message(f"คุณเลือก: {choice}")
+
 @rps.autocomplete('choice')
 async def rps_autocomplete(interaction: discord.Interaction, current: str):
-    options = ['ค้อน', 'กรรไกร', 'กระดาษ']
-    return [app_commands.Choice(name=o, value=o) for o in options if current in o]
+    options = ['rock', 'paper', 'scissors']
+    return [app_commands.Choice(name=option, value=option) for option in options if current.lower() in option.lower()]
 
 @bot.tree.command(name="lotto", description="ซื้อลอตเตอรี่ลุ้นรางวัล!")
 async def lotto(interaction: discord.Interaction):
