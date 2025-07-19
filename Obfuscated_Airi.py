@@ -278,6 +278,17 @@ async def on_message(message):
     await message.reply(reply)
     await bot.process_commands(message)
 
+# อ่านภาพหน่อย
+    for attachment in message.attachments:
+        if attachment.content_type and attachment.content_type.startswith("image/"):
+            # หากเป็นภาพจะตอบกลับด้วยข้อความว่าไอริรับภาพแล้ว
+            await message.reply("เห็นละ")
+            image_data = await attachment.read()  # อ่านข้อมูลภาพ
+            # สมมติว่าเราจะสร้างไฟล์รูปจากการอ่านนี้ (ให้เป็นไฟล์ใน discord)
+            file = discord.File(fp=image_data, filename="image.png")  # ส่งไฟล์ในรูปแบบ .png
+            await message.reply("นี่คือ", file=file)  # ตอบกลับเป็นไฟล์ภาพ
+            return
+
 # ----------------- COMMAND -----------------
 
 @bot.tree.command(name="reset", description="รีเซ็ตความจำของไอริ")
