@@ -238,8 +238,15 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     global latest_channel_id
+
+    # ถ้าช่องที่ไม่ตรงกับช่องล่าสุด หรือส่งจากบอทเอง ให้หยุด
     if message.channel.id != latest_channel_id or message.author.id == bot.user.id:
         return
+
+    embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
+    await message.reply(embed=embed)
+
+    # โค้ดอื่น ๆ ที่คุณต้องการจะทำหลังจากนี้
 
     user_id = message.author.id
     last_user_message_id[user_id] = message.id
@@ -304,9 +311,6 @@ async def on_message(message):
 
     await message.reply(reply)
     await bot.process_commands(message)
-
-embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
-        await message.reply(embed=embed)
 
 # ----------------- COMMAND -----------------
 
