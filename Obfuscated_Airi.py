@@ -266,6 +266,23 @@ async def on_message(message):
     except Exception as e:
         reply = "ขอโทษน้าา~ ไอริฟังไม่ออกเลยค่ะ 😢"
         print(f"[ERROR] {type(e).__name__}: {e}")
+     
+        # อ่านรูปภาพ
+
+        for attachment in message.attachments:
+        if attachment.content_type:
+            if attachment.content_type.startswith("image/"):
+                if attachment.content_type == "image/gif":
+                    await message.reply("อุ้ย~ ไอริยังดู .gif ไม่ได้เลยน้า~ 😢 ส่งเป็นภาพธรรมดาได้มั้ยน้า~")
+                    return
+                image_data = await attachment.read()
+                parts.append({
+                    "mime_type": attachment.content_type,
+                    "data": image_data
+                })
+            elif attachment.content_type.startswith("video/"):
+                await message.reply("อุ้ย~ ตอนนี้ไอริยังดูวิดีโอไม่ได้น้า~ 🥺💦")
+                return
 
     # ปรับค่าความรู้สึก
     impression_score[user_id] = min(100, impression_score[user_id] + 1)
@@ -277,17 +294,6 @@ async def on_message(message):
 
     await message.reply(reply)
     await bot.process_commands(message)
-
-# อ่านภาพหน่อย
-    for attachment in message.attachments:
-        if attachment.content_type and attachment.content_type.startswith("image/"):
-            # หากเป็นภาพจะตอบกลับด้วยข้อความว่าไอริรับภาพแล้ว
-            await message.reply("เห็นละ")
-            image_data = await attachment.read()  # อ่านข้อมูลภาพ
-            # สมมติว่าเราจะสร้างไฟล์รูปจากการอ่านนี้ (ให้เป็นไฟล์ใน discord)
-            file = discord.File(fp=image_data, filename="image.png")  # ส่งไฟล์ในรูปแบบ .png
-            await message.reply("นี่คือ", file=file)  # ตอบกลับเป็นไฟล์ภาพ
-            return
 
 # ----------------- COMMAND -----------------
 
