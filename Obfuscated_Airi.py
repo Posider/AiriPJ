@@ -28,6 +28,10 @@ impression_score = defaultdict(int)
 grudge_level = defaultdict(int)
 last_user_message_id = defaultdict(int)
 
+impression_score = defaultdict(int)
+
+user_money = defaultdict(int)
+
 # คำหยาบและคำตอบเฉพาะ
 bad_words = ["สัส", "โง่", "ควย", "แม่ง", "ส้นตีน", "เย็ด", "หี", "หำ", "เงี่ยน", "แม่มึงอะ", "เสียวควย", "พ่อมึงอะ"]
 custom_responses = {
@@ -270,19 +274,19 @@ async def on_message(message):
         # อ่านรูปภาพ
 
         for attachment in message.attachments:
-        if attachment.content_type:
-            if attachment.content_type.startswith("image/"):
-                if attachment.content_type == "image/gif":
-                    await message.reply("อุ้ย~ ไอริยังดู .gif ไม่ได้เลยน้า~ 😢 ส่งเป็นภาพธรรมดาได้มั้ยน้า~")
-                    return
-                image_data = await attachment.read()
-                parts.append({
-                    "mime_type": attachment.content_type,
-                    "data": image_data
-                })
-            elif attachment.content_type.startswith("video/"):
-                await message.reply("อุ้ย~ ตอนนี้ไอริยังดูวิดีโอไม่ได้น้า~ 🥺💦")
-                return
+            if attachment.content_type:
+                if attachment.content_type.startswith("image/"):
+                    if attachment.content_type == "image/gif":
+                        await message.reply("อุ้ย~ ไอริยังดู .gif ไม่ได้เลยน้า~ 😢 ส่งเป็นภาพธรรมดาได้มั้ยน้า~")
+                        return
+                    image_data = await attachment.read()
+                    parts.append({
+                        "mime_type": attachment.content_type,
+                        "data": image_data
+                    })
+                elif attachment.content_type.startswith("video/"):
+                    await message.reply("อุ้ย~ ตอนนี้ไอริยังดูวิดีโอไม่ได้น้า~ 🥺💦")
+                    return 
 
     # ปรับค่าความรู้สึก
     impression_score[user_id] = min(100, impression_score[user_id] + 1)
@@ -294,6 +298,9 @@ async def on_message(message):
 
     await message.reply(reply)
     await bot.process_commands(message)
+
+embed = discord.Embed(description=reply[:4096], color=0xFFB6C1)
+        await message.reply(embed=embed)
 
 # ----------------- COMMAND -----------------
 
@@ -335,5 +342,164 @@ async def jump_channel(interaction: discord.Interaction, channel_name: str):
 async def say(interaction: discord.Interaction, ข้อความ: str):
     await interaction.response.send_message(ข้อความ)
 
+@bot.tree.command(name="work", description="ทำงานแลกเงินน้า~ 💼")
+async def work(interaction: discord.Interaction):
+    jobs = [
+        ("ขายขนมครก", 10, 25),
+        ("ล้างจานในร้านอาหาร", 15, 30),
+        ("วาดรูปขาย", 20, 35),
+        ("ช่วยคุณยายถือของ", 5, 15),
+        ("สตรีมเกม", 10, 50),
+        ("แจกใบปลิว", 5, 20),
+        ("ร้องเพลงข้างถนน", 8, 40),
+        ("เลี้ยงเด็กแสบ", 15, 35),
+    ]
+    
+    job, min_pay, max_pay = random.choice(jobs)
+    pay = random.randint(min_pay, max_pay)
+
+    user_money[interaction.user.id] += pay
+    await interaction.response.send_message(
+        f"พี่ไปทำงานเป็น **{job}** แล้วได้เงินมา {pay} บาทน้า~ 💵 ขยันสุดๆ ไปเลย~!"
+    )
+
+@bot.tree.command(name="balance", description="ดูจำนวนเงินที่มีอยู่ 💰")
+async def balance(interaction: discord.Interaction):
+    money = user_money[interaction.user.id]
+    await interaction.response.send_message(f"พี่มีเงินอยู่ **{money} บาท** แล้วน้า~ 💖")
+
+@bot.tree.command(name="profile", description="ดูโปรไฟล์ของพี่จ๋าเองน้า~ 📝")
+async def view_profile(interaction: discord.Interaction):
+    user_id = interaction.user.id
+    name = interaction.user.display_name
+
+    money = user_money[user_id]
+    impression = impression_score[user_id]
+    grudge = grudge_level[user_id]
+
+    embed = discord.Embed(
+        title=f"โปรไฟล์ของ {name}",
+        color=0xADD8E6
+    )
+    embed.add_field(name="💰 เงินที่มี", value=f"{money} บาท", inline=False)
+    embed.add_field(name="💗 ความประทับใจของไอริ", value=f"{impression} / 100", inline=False)
+    embed.add_field(name="😠 ความงอนของไอริ", value=f"{grudge} / 15", inline=False)
+    embed.set_footer(text="ไอริจะพยายามน่ารักกับพี่เสมอเลยน้า~ 💕")
+
+    await interaction.response.send_message(embed=embed)
+
+@rps.autocomplete('choice')
+async def rps_autocomplete(interaction: discord.Interaction, current: str):
+    options = ['ค้อน', 'กรรไกร', 'กระดาษ']
+    return [app_commands.Choice(name=o, value=o) for o in options if current in o]
+
+@bot.tree.command(name="lotto", description="ซื้อลอตเตอรี่ลุ้นรางวัล!")
+async def lotto(interaction: discord.Interaction):
+    ticket_price = 10
+    if user_money[interaction.user.id] < ticket_price:
+        await interaction.response.send_message("พี่มีเงินไม่พอซื้อลอตเตอรี่เลยน้า~ 😢", ephemeral=True)
+        return
+
+    user_money[interaction.user.id] -= ticket_price
+    winning_number = random.randint(0, 99)
+    user_number = random.randint(0, 99)
+
+    result = f"เลขที่ออก: **{winning_number:02d}**\nเลขของพี่: **{user_number:02d}**\n"
+
+    if user_number == winning_number:
+        prize = 100
+        user_money[interaction.user.id] += prize
+        result += f"🎉 เย้~ ถูกรางวัลใหญ่เลย! รับไปเลย {prize} บาทค่า~"
+    elif user_number % 10 == winning_number % 10 or user_number // 10 == winning_number // 10:
+        prize = 20
+        user_money[interaction.user.id] += prize
+        result += f"✨ ถูกรางวัลเลขหลักเดียว~ รับไป {prize} บาทค่า~"
+    else:
+        result += "😭 ไม่ถูกเลย ไว้ลองใหม่น้า~"
+
+    await interaction.response.send_message(result)
+
+# ฟังก์ชันลดค่าความงอน
+@bot.tree.command(name="send_gift", description="ส่งของขวัญเพื่อลดค่าความงอน")
+@app_commands.describe(gift="เลือกของขวัญ เช่น ดอกไม้, ขนม, ช็อคโกแลต, การ์ด")
+async def send_gift(interaction: discord.Interaction, gift: str):
+    # เช็คเงินของผู้เล่น
+    if user_money[interaction.user.id] < get_gift_price(gift):
+        await interaction.response.send_message("เงินไม่พอค่ะ~ ลองหามาเพิ่มดูน้า~")
+        return
+
+    # ลดค่าความงอนและหักเงิน
+    grudge_level[interaction.user.id] = max(0, grudge_level[interaction.user.id] - get_gift_value(gift))
+    user_money[interaction.user.id] -= get_gift_price(gift)
+
+    # ส่งข้อความ
+    await interaction.response.send_message(f"ไอริได้รับ {gift} จากพี่แล้วน้า~ ขอบคุณมากเลยค่ะ~ ค่าเงียบๆ ลดความงอนได้บ้างแล้วนะ~")
+
+# ฟังก์ชันหาค่าราคา
+def get_gift_price(gift: str) -> int:
+    gift_prices = {
+        "ดอกไม้": 10,
+        "ขนม": 20,
+        "ช็อคโกแลต": 30,
+        "การ์ด": 5
+    }
+    return gift_prices.get(gift, 0)
+
+# ฟังก์ชันหาค่าความงอนที่จะลด
+def get_gift_value(gift: str) -> int:
+    gift_values = {
+        "ดอกไม้": 1,
+        "ขนม": 2,
+        "ช็อคโกแลต": 3,
+        "การ์ด": 1
+    }
+    return gift_values.get(gift, 0)
+
+# ฟังก์ชันทายเลข
+@bot.tree.command(name="guess_number", description="ทายเลขระหว่าง 1-10")
+async def guess_number(interaction: discord.Interaction):
+    correct_number = random.randint(1, 10)
+    await interaction.response.send_message("ทายเลขระหว่าง 1-10 นะ~ ให้ฉันดูว่าทายถูกไหมค่า~")
+    
+    def check(m):
+        return m.author == interaction.user and m.channel == interaction.channel
+
+    try:
+        msg = await bot.wait_for('message', check=check, timeout=30.0)
+        if int(msg.content) == correct_number:
+            await interaction.followup.send("เย้~ ทายถูกแล้วค่า~ ได้รางวัล 10 บาท!")
+            # เพิ่มเงินให้ผู้เล่น
+            add_money(interaction.user.id, 10)
+        else:
+            await interaction.followup.send(f"โอ๋ๆ ไม่ถูกค่า~ เลขที่ถูกต้องคือ {correct_number} น้า~")
+    except asyncio.TimeoutError:
+        await interaction.followup.send("เวลาหมดแล้วค่า~ ลองทายใหม่ดูนะ!")
+
+# ฟังก์ชันจับคู่รูปภาพ
+@bot.tree.command(name="match_images", description="จับคู่รูปภาพที่เหมือนกัน")
+async def match_images(interaction: discord.Interaction):
+    images = ["🍎", "🍌", "🍒", "🍎", "🍌", "🍒"]
+    random.shuffle(images)
+
+    await interaction.response.send_message("จับคู่ผลไม้ที่เหมือนกันให้ได้นะ~ แค่พิมพ์เลข 1-6 เพื่อเลือกดูค่า~")
+
+    def check(m):
+        return m.author == interaction.user and m.channel == interaction.channel
+
+    try:
+        msg = await bot.wait_for('message', check=check, timeout=30.0)
+        selected = [int(i) - 1 for i in msg.content.split()]
+        if len(selected) != 2 or selected[0] == selected[1]:
+            await interaction.followup.send("เลือก 2 ตัวที่ไม่ซ้ำกันน้า~ ลองใหม่ค่ะ!")
+        elif images[selected[0]] == images[selected[1]]:
+            await interaction.followup.send("เย้~ จับคู่ได้ถูกต้อง! ได้รางวัล 20 บาทค่า~")
+            # เพิ่มเงินให้ผู้เล่น
+            add_money(interaction.user.id, 20)
+        else:
+            await interaction.followup.send("โอ๋ๆ ไม่เหมือนกันนะ ลองใหม่ค่ะ~")
+    except asyncio.TimeoutError:
+        await interaction.followup.send("เวลาหมดแล้วค่า~ ลองทายใหม่ดูนะ!")
+
 # ----------------- เริ่มบอท -----------------
+
 bot.run(DISCORD_TOKEN)
